@@ -1,0 +1,104 @@
+Importing the libraries
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from pandasql import sqldf
+pysqldf = lambda q: sqldf(q, globals())
+import seaborn as sns
+
+
+Data Collecting 
+
+athlete_events = pd.read_csv("athlete_events.csv")
+noc_regions = pd.read_csv("noc_regions.csv")
+
+print(athlete_events.head(4))
+
+print(athlete_events.columns)
+
+print(pysqldf(''' SELECT 
+                        COUNT(ID)
+                        
+                  FROM
+                        athlete_events
+                 
+                  '''))
+
+print(pysqldf('''SELECT 
+                        Sex,
+                        COUNT(*)            
+                 FROM athlete_events
+                 GROUP BY Sex'''))
+
+Age, Weight, and Height 
+
+print(pysqldf('''SELECT 
+                        Min(Age),
+                        Max(Age),
+                        Min(Weight),
+                        Max(Weight),
+                        Min(Height),
+                        Max(Height)
+                 FROM athlete_events
+                 '''))
+
+Age_Height_Weight=pysqldf('''SELECT 
+                        Age,
+                        Weight,
+                        Height
+                 FROM athlete_events
+                 ''')
+
+Age_Height_Weight.hist(bins=25,figsize=(10,10))
+plt.show()
+
+Olympics time period
+
+print(pysqldf(''' SELECT 
+                        Min(Year) AS Min_year,
+                        Max(Year) AS Max_year,
+                        Max(Year)-Min(Year) As period
+                        
+                  FROM
+                        athlete_events
+                 
+                  '''))
+
+print(pysqldf('''SELECT 
+                        Season,
+                        Year
+                                    
+                 FROM athlete_events
+                 GROUP BY Year 
+                 ORDER BY Season'''))
+
+Athletes's City
+
+print(pysqldf('''SELECT 
+                        City                                    
+                 FROM athlete_events
+                 GROUP BY City 
+                 '''))
+
+print(pysqldf('''SELECT 
+                        Sport                                    
+                 FROM athlete_events
+                 GROUP BY Sport 
+                 '''))
+
+Sports
+
+print(pysqldf('''SELECT 
+                        Event                                    
+                 FROM athlete_events
+                 GROUP BY Event 
+                 '''))
+
+print(pysqldf('''SELECT 
+                        Medal                                    
+                 FROM athlete_events
+                 GROUP BY Medal 
+                 '''))
+
+
+

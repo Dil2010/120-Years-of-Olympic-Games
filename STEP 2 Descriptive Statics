@@ -1,0 +1,221 @@
+Importing the libraries
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from pandasql import sqldf
+pysqldf = lambda q: sqldf(q, globals())
+import seaborn as sns
+
+
+Data Collecting 
+
+athlete_events = pd.read_csv("athlete_events.csv")
+noc_regions = pd.read_csv("noc_regions.csv")
+
+Female to Male ratio
+
+m_f_ratio = pysqldf('''SELECT 
+                        Year,
+                        100*CAST(SUM(CASE WHEN Sex = "F" THEN 1 ELSE 0 END) AS float) / (CAST(SUM(CASE WHEN Sex = "F" THEN 1 ELSE 0 END) AS float) + CAST(SUM(CASE WHEN Sex = "M" THEN 1 ELSE 0 END) AS float))
+                          AS Ratio
+                        FROM 
+                        athlete_events
+                     GROUP BY Year
+                    ''')
+
+
+print(m_f_ratio)
+
+plt.plot(m_f_ratio.Year, m_f_ratio.Ratio,label="Olympics")
+plt.xlabel("Year")
+plt.ylabel("Female to Male Ratio")
+plt.legend()
+
+Male= pysqldf('''SELECT 
+                        Year,
+                        CAST(SUM(CASE WHEN Sex = "M" THEN 1 ELSE 0 END) AS float) AS Male
+                        FROM 
+                        athlete_events
+                     GROUP BY Year
+                    ''')
+
+print(Male)
+
+Female= pysqldf('''SELECT 
+                        Year,
+                        CAST(SUM(CASE WHEN Sex = "F" THEN 1 ELSE 0 END) AS float) AS Female
+                        FROM 
+                        athlete_events
+                     GROUP BY Year
+                    ''')
+
+print(Female)
+
+plt.plot(Male.Year, Male.Male, marker='', color='blue', linewidth=2, label = "Male")
+plt.plot(Female.Year, Female.Female, marker='', color='red', linewidth=2, label = "Female")
+plt.legend(loc=1)
+plt.xlabel("Year")
+plt.ylabel("Athletes")
+plt.title("Olympics")
+
+athlete_medals = pysqldf('''
+                    SELECT
+                      Year,
+                      CAST(medal_count AS FLOAT) / total_count AS medal_ratio,
+                      CAST(gold_count AS FLOAT) / medal_count AS gold_ratio,
+                      CAST(silver_count AS FLOAT) / medal_count AS silver_ratio,
+                      CAST(bronze_count AS FLOAT) / medal_count AS bronze_ratio
+                    FROM
+                    (
+                         SELECT
+                             Year,
+                             COUNT(*) AS total_count,
+                             SUM(CASE
+                                   WHEN Medal IS NOT NULL THEN 1 ELSE 0
+                                 END) AS medal_count,
+                             SUM(CASE
+                                   WHEN Medal = "Gold" THEN 1 ELSE 0
+                                 END) AS gold_count,
+                             SUM(CASE
+                                   WHEN Medal = "Silver" THEN 1 ELSE 0
+                                 END) AS silver_count,
+                             SUM(CASE
+                                   WHEN Medal = "Bronze" THEN 1 ELSE 0
+                                 END) AS bronze_count
+                             FROM
+                               athlete_events
+                             GROUP BY
+                               Year 
+                        )new_table
+                       ''')
+
+print(athlete_medals)
+
+plt.plot(athlete_medals.Year, athlete_medals.gold_ratio, marker='', color='yellow', linewidth=2, label = "Gold ratio")
+plt.plot(athlete_medals.Year, athlete_medals.silver_ratio, marker='', color='silver', linewidth=2, label = "Silver ratio")
+plt.plot(athlete_medals.Year, athlete_medals.bronze_ratio, marker='', color='brown', linewidth=2, label = "Bronze ratio")
+plt.legend(loc=1)
+plt.xlabel("Year")
+plt.ylabel("Medal Ratio")
+plt.title("Olympics")
+
+Country=pysqldf('''SELECT 
+                        NOC,                              
+                        COUNT(*) * 100.0 / SUM(COUNT(*)) over () AS ratio                    
+                 FROM athlete_events
+                 GROUP BY NOC
+                 ORDER BY ratio
+                                                   ''')
+
+print(Country)
+
+plt.scatter(Country.NOC,Country.ratio)
+plt.show()
+
+print(pysqldf('''SELECT Sex,
+                        AVG(Age),
+                        AVG(Height),
+                        AVG(Weight)
+                 FROM athlete_events
+                 GROUP BY Sex
+                 '''))
+
+Athletes_Summer = pysqldf('''SELECT 
+                            Year,
+                            COUNT(ID) AS Athletes
+                            
+                        FROM 
+                            athlete_events
+                        WHERE Season='Summer'
+                        GROUP BY 
+                             Year
+                    ''')
+
+print(Athletes_Summer)
+
+Athletes_Winter = pysqldf('''SELECT 
+                            Year,
+                            COUNT(ID) AS Athletes
+                            
+                        FROM 
+                            athlete_events
+                        WHERE Season='Winter'
+                        GROUP BY 
+                             Year
+                    ''')
+
+print(Athletes_Winter)
+
+plt.plot(Athletes_Summer.Year, Athletes_Summer.Athletes, marker='', color='blue', linewidth=2, label = "Summer")
+plt.plot(Athletes_Winter.Year, Athletes_Winter.Athletes, marker='', color='red', linewidth=2, label = "Winter")
+plt.legend(loc=1)
+plt.xlabel("Year")
+plt.ylabel("Athletes")
+plt.title("Olympics")
+
+Nations_Summer = pysqldf('''SELECT 
+                            Year,
+                            COUNT(DISTINCT(NOC)) AS Nations
+                            
+                        FROM 
+                            athlete_events
+                        WHERE Season='Summer'
+                        GROUP BY 
+                             Year
+                    ''') 
+
+print(Nations_Summer)
+
+Nations_Winter = pysqldf('''SELECT 
+                            Year,
+                            COUNT(DISTINCT(NOC)) AS Nations
+                            
+                        FROM 
+                            athlete_events
+                        WHERE Season='Winter'
+                        GROUP BY 
+                             Year
+                    ''') 
+
+print(Nations_Winter)
+
+plt.plot(Nations_Summer.Year, Nations_Summer.Nations, marker='', color='blue', linewidth=2, label = "Summer")
+plt.plot(Nations_Winter.Year, Nations_Winter.Nations, marker='', color='red', linewidth=2, label = "Winter")
+plt.legend(loc=1)
+plt.xlabel("Year")
+plt.ylabel("Nations")
+plt.title("Olympics")
+
+Events_Summer = pysqldf('''SELECT 
+                            Year,
+                            COUNT(DISTINCT(Event)) AS Events
+                            
+                        FROM 
+                            athlete_events
+                        WHERE Season='Summer'
+                        GROUP BY 
+                             Year
+                    ''') 
+
+print(Events_Summer)
+
+Events_Winter = pysqldf('''SELECT 
+                            Year,
+                            COUNT(DISTINCT(Event)) AS Events
+                            
+                        FROM 
+                            athlete_events
+                        WHERE Season='Winter'
+                        GROUP BY 
+                             Year
+                    ''') 
+
+print(Events_Winter)
+
+plt.plot(Events_Summer.Year, Events_Summer.Events, marker='', color='blue', linewidth=2, label = "Summer")
+plt.plot(Events_Winter.Year, Events_Winter.Events, marker='', color='red', linewidth=2, label = "Winter")
+plt.legend(loc=1)
+plt.xlabel("Year")
+plt.ylabel("Events")
+plt.title("Olympics")
+

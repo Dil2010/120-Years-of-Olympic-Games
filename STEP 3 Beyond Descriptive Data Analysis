@@ -1,0 +1,114 @@
+Importing the libraries
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pandasql import sqldf
+pysqldf = lambda q: sqldf(q, globals())
+import seaborn as sns
+
+
+Data Collecting 
+
+athlete_events = pd.read_csv("athlete_events.csv")
+noc_regions = pd.read_csv("noc_regions.csv")
+
+summer_events = pysqldf('''SELECT
+                             ID,
+                             Name,
+                             Sex,
+                             Age,
+                             Height,
+                             Weight,
+                             NOC,
+                             Year,
+                             Sport,
+                             Event,
+                             Medal
+                           FROM
+                             athlete_events
+                           WHERE
+                             Season = "Summer"''')
+
+winter_events = pysqldf('''SELECT
+                             ID,
+                             Name,
+                             Sex,
+                             Age,
+                             Height,
+                             Weight,
+                             NOC,
+                             Year,
+                             Sport,
+                             Event,
+                             Medal
+                           FROM
+                             athlete_events
+                           WHERE
+                             Season = "Winter"''')
+
+#Summer Olympics:
+summer_medal_count = pysqldf('''
+                         SELECT
+                             Year,
+                             COUNT(*) AS total_count,
+                             SUM(CASE
+                                   WHEN Medal IS NOT NULL THEN 1 ELSE 0
+                                 END) AS medal_count,
+                             SUM(CASE
+                                   WHEN Medal = "Gold" THEN 1 ELSE 0
+                                 END) AS gold_count,
+                             SUM(CASE
+                                   WHEN Medal = "Silver" THEN 1 ELSE 0
+                                 END) AS silver_count,
+                             SUM(CASE
+                                   WHEN Medal = "Bronze" THEN 1 ELSE 0
+                                 END) AS bronze_count
+                             FROM
+                               summer_events
+                             GROUP BY
+                               Year 
+                                   ''')
+
+#Winter Olympics:
+winter_medal_count = pysqldf('''
+                         SELECT
+                             Year,
+                             COUNT(*) AS total_count,
+                             SUM(CASE
+                                   WHEN Medal IS NOT NULL THEN 1 ELSE 0
+                                 END) AS medal_count,
+                             SUM(CASE
+                                   WHEN Medal = "Gold" THEN 1 ELSE 0
+                                 END) AS gold_count,
+                             SUM(CASE
+                                   WHEN Medal = "Silver" THEN 1 ELSE 0
+                                 END) AS silver_count,
+                             SUM(CASE
+                                   WHEN Medal = "Bronze" THEN 1 ELSE 0
+                                 END) AS bronze_count
+                             FROM
+                               winter_events
+                             GROUP BY
+                               Year 
+                                   ''')
+
+print(summer_medal_count.head())
+
+print(winter_medal_count.head())
+
+print(summer_medal_count)
+
+summer_medal_count_new = summer_medal_count[7:]
+
+print(summer_medal_count_new)
+
+x_simple = winter_medal_count.medal_count
+y_simple = summer_medal_count_new.medal_count
+my_rho = np.corrcoef(x_simple, y_simple)
+
+print(my_rho)
+
+print("std_medal_count_summer_olympics =",std_medal_count_summer_olympics)
+print("std_medal_count_winter_olympics =",std_medal_count_winter_olympics)
+
